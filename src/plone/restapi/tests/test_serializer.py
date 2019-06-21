@@ -263,8 +263,8 @@ class TestSerializeToJsonAdapter(unittest.TestCase):
                 u"listing": {u"download": download_url, u"width": 16, u"height": 4},
                 u"icon": {u"download": download_url, u"width": 32, u"height": 8},
                 u"tile": {u"download": download_url, u"width": 64, u"height": 16},
-                u"thumb": {u"download": download_url, u"width": 128, u"height": 33},
-                u"mini": {u"download": download_url, u"width": 200, u"height": 52},
+                u"thumb": {u"download": download_url, u"width": 200, u"height": 52},
+                u"mini": {u"download": download_url, u"width": 215, u"height": 56},
                 u"preview": {u"download": download_url, u"width": 215, u"height": 56},
                 u"large": {u"download": download_url, u"width": 215, u"height": 56},
             }
