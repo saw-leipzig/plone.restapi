@@ -11,16 +11,17 @@ from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedFile
 from plone.namedfile.file import NamedImage
 from plone.restapi.interfaces import IFieldSerializer
+from plone.registry.interfaces import IRegistry
 from plone.restapi.serializer.dxfields import DefaultFieldSerializer
 from plone.restapi.testing import PLONE_RESTAPI_DX_INTEGRATION_TESTING
 from plone.restapi.testing import PLONE_VERSION
 from plone.scale import storage
+from Products.CMFCore.utils import getToolByName
 from unittest import TestCase
 from z3c.form.interfaces import IDataManager
 from zope.component import getMultiAdapter
-from zope.interface.verify import verifyClass
 from zope.component import getUtility
-from plone.registry.interfaces import IRegistry
+from zope.interface.verify import verifyClass
 
 import os
 import six
@@ -236,8 +237,12 @@ class TestDexterityFieldSerializing(TestCase):
             download_url = u"{}/@@images/{}.{}".format(
                 obj_url, scale_url_uuid, GIF_SCALE_FORMAT
             )
-            registry = getUtility(IRegistry)
-            allowed_sizes = registry["plone.allowed_sizes"]
+            if PLONE_VERSION.base_version >= "5.0":
+                registry = getUtility(IRegistry)
+                allowed_sizes = registry["plone.allowed_sizes"]
+            else:
+                portal_properties = getToolByName('portal_properties')
+                allowed_sizes = portal_properties.imaging_properties.getProperty("allowed_sizes")
 
             scales = value["scales"]
             del value["scales"]
@@ -303,8 +308,14 @@ class TestDexterityFieldSerializing(TestCase):
             download_url = u"{}/@@images/{}.{}".format(
                 obj_url, scale_url_uuid, GIF_SCALE_FORMAT
             )
-            registry = getUtility(IRegistry)
-            allowed_sizes = registry["plone.allowed_sizes"]
+
+            if PLONE_VERSION.base_version >= "5.0":
+                registry = getUtility(IRegistry)
+                allowed_sizes = registry["plone.allowed_sizes"]
+            else:
+                portal_properties = getToolByName('portal_properties')
+                allowed_sizes = portal_properties.imaging_properties.getProperty("allowed_sizes")
+
 
             scales = value["scales"]
             del value["scales"]

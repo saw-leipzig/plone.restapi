@@ -6,10 +6,13 @@ from plone.app.testing import TEST_USER_ID
 from plone.app.textfield.value import RichTextValue
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedFile
+from plone.registry.interfaces import IRegistry
 from plone.restapi.interfaces import ISerializeToJson
 from plone.restapi.testing import PLONE_RESTAPI_DX_INTEGRATION_TESTING
+from plone.restapi.testing import PLONE_VERSION
 from plone.scale import storage
 from Products.CMFCore.utils import getToolByName
+from zope.component import getUtility
 from zope.component import getMultiAdapter
 
 import json
@@ -259,15 +262,41 @@ class TestSerializeToJsonAdapter(unittest.TestCase):
             obj_url = self.portal.image1.absolute_url()
             scale_url_uuid = "uuid_1"
             download_url = u"{}/@@images/{}.png".format(obj_url, scale_url_uuid)
-            scales = {
-                u"listing": {u"download": download_url, u"width": 16, u"height": 4},
-                u"icon": {u"download": download_url, u"width": 32, u"height": 8},
-                u"tile": {u"download": download_url, u"width": 64, u"height": 16},
-                u"thumb": {u"download": download_url, u"width": 200, u"height": 52},
-                u"mini": {u"download": download_url, u"width": 215, u"height": 56},
-                u"preview": {u"download": download_url, u"width": 215, u"height": 56},
-                u"large": {u"download": download_url, u"width": 215, u"height": 56},
-            }
+            obj = self.serialize(self.portal.image1)["image"]
+
+            if PLONE_VERSION.base_version >= "5.0":
+                registry = getUtility(IRegistry)
+                registry["plone.allowed_sizes"] = [
+                    "large 215:56",
+                    "preview 215:56",
+                    "mini 215:56",
+                    "thumb 200:52",
+                    "tile 64:64",
+                    "icon 32:32",
+                    "listing 16:16",
+                ]
+
+                allowed_sizes = registry["plone.allowed_sizes"]
+            else:
+                portal_properties = getToolByName('portal_properties')
+                portal_properties.imaging_properties.setProperty(
+                    "allowed_sizes",
+                    (
+                        "large 215:56",
+                        "preview 215:56",
+                        "mini 215:56",
+                        "thumb 200:52",
+                        "tile 64:64",
+                        "icon 32:32",
+                        "listing 16:16",
+                    )
+                )
+                allowed_sizes = portal_properties.imaging_properties.getProperty("allowed_sizes")
+
+
+            scales = obj["scales"]
+            del obj["scales"]
+
             self.assertEqual(
                 {
                     u"filename": u"image.png",
@@ -276,10 +305,17 @@ class TestSerializeToJsonAdapter(unittest.TestCase):
                     u"download": download_url,
                     u"width": 215,
                     u"height": 56,
-                    u"scales": scales,
                 },
-                self.serialize(self.portal.image1)["image"],
+                obj,
             )
+
+            for allowed_size in allowed_sizes:
+                name, size_def = allowed_size.split()
+                self.assertIn(name, scales)
+                width, height = size_def.split(":")
+                width = int(width)
+                self.assertEqual(width, scales[name]["width"])
+                self.assertEqual(download_url, scales[name]["download"])
 
     def test_serialize_empty_image_returns_none(self):
         self.portal.invokeFactory("Image", id="image1", title="Image 1")
