@@ -19,6 +19,8 @@ from unittest import TestCase
 from z3c.form.interfaces import IDataManager
 from zope.component import getMultiAdapter
 from zope.interface.verify import verifyClass
+from zope.component import getUtility
+from plone.registry.interfaces import IRegistry
 
 import os
 import six
@@ -216,7 +218,7 @@ class TestDexterityFieldSerializing(TestCase):
         )
 
     def test_namedimage_field_serialization_returns_dict(self):
-        image_file = os.path.join(os.path.dirname(__file__), u"1024x768.gif")
+        image_file = os.path.join(os.path.dirname(__file__), u"image.gif")
         with open(image_file, "rb") as f:
             image_data = f.read()
         fn = "test_namedimage_field"
@@ -224,7 +226,7 @@ class TestDexterityFieldSerializing(TestCase):
             value = self.serialize(
                 fn,
                 NamedImage(
-                    data=image_data, contentType=u"image/gif", filename=u"1024x768.gif"
+                    data=image_data, contentType=u"image/gif", filename=u"image.gif"
                 ),
             )
             self.assertTrue(isinstance(value, dict), "Not a <dict>")
@@ -234,27 +236,31 @@ class TestDexterityFieldSerializing(TestCase):
             download_url = u"{}/@@images/{}.{}".format(
                 obj_url, scale_url_uuid, GIF_SCALE_FORMAT
             )
-            scales = {
-                u"listing": {u"download": download_url, u"width": 16, u"height": 12},
-                u"icon": {u"download": download_url, u"width": 32, u"height": 24},
-                u"tile": {u"download": download_url, u"width": 64, u"height": 48},
-                u"thumb": {u"download": download_url, u"width": 128, u"height": 96},
-                u"mini": {u"download": download_url, u"width": 200, u"height": 150},
-                u"preview": {u"download": download_url, u"width": 400, u"height": 300},
-                u"large": {u"download": download_url, u"width": 768, u"height": 576},
-            }
+            registry = getUtility(IRegistry)
+            allowed_sizes = registry["plone.allowed_sizes"]
+
+            scales = value["scales"]
+            del value["scales"]
+
             self.assertEqual(
                 {
-                    u"filename": u"1024x768.gif",
+                    u"filename": u"image.gif",
                     u"content-type": u"image/gif",
-                    u"size": 1514,
+                    u"size": 3223,
                     u"download": download_url,
-                    u"width": 1024,
-                    u"height": 768,
-                    u"scales": scales,
+                    u"width": 2000,
+                    u"height": 1500,
                 },
                 value,
             )
+
+            for allowed_size in allowed_sizes:
+                name, size_def = allowed_size.split()
+                self.assertIn(name, scales)
+                width, height = size_def.split(":")
+                width = int(width)
+                self.assertEqual(width, scales[name]["width"])
+                self.assertEqual(download_url, scales[name]["download"])
 
     def test_namedblobfile_field_serialization_returns_dict(self):
         value = self.serialize(
@@ -279,7 +285,7 @@ class TestDexterityFieldSerializing(TestCase):
         )
 
     def test_namedblobimage_field_serialization_returns_dict(self):
-        image_file = os.path.join(os.path.dirname(__file__), u"1024x768.gif")
+        image_file = os.path.join(os.path.dirname(__file__), u"image.gif")
         with open(image_file, "rb") as f:
             image_data = f.read()
         fn = "test_namedblobimage_field"
@@ -287,7 +293,7 @@ class TestDexterityFieldSerializing(TestCase):
             value = self.serialize(
                 fn,
                 NamedBlobImage(
-                    data=image_data, contentType=u"image/gif", filename=u"1024x768.gif"
+                    data=image_data, contentType=u"image/gif", filename=u"image.gif"
                 ),
             )
             self.assertTrue(isinstance(value, dict), "Not a <dict>")
@@ -297,27 +303,31 @@ class TestDexterityFieldSerializing(TestCase):
             download_url = u"{}/@@images/{}.{}".format(
                 obj_url, scale_url_uuid, GIF_SCALE_FORMAT
             )
-            scales = {
-                u"listing": {u"download": download_url, u"width": 16, u"height": 12},
-                u"icon": {u"download": download_url, u"width": 32, u"height": 24},
-                u"tile": {u"download": download_url, u"width": 64, u"height": 48},
-                u"thumb": {u"download": download_url, u"width": 128, u"height": 96},
-                u"mini": {u"download": download_url, u"width": 200, u"height": 150},
-                u"preview": {u"download": download_url, u"width": 400, u"height": 300},
-                u"large": {u"download": download_url, u"width": 768, u"height": 576},
-            }
+            registry = getUtility(IRegistry)
+            allowed_sizes = registry["plone.allowed_sizes"]
+
+            scales = value["scales"]
+            del value["scales"]
+
             self.assertEqual(
                 {
-                    u"filename": u"1024x768.gif",
+                    u"filename": u"image.gif",
                     u"content-type": u"image/gif",
-                    u"size": 1514,
+                    u"size": 3223,
                     u"download": download_url,
-                    u"width": 1024,
-                    u"height": 768,
-                    u"scales": scales,
+                    u"width": 2000,
+                    u"height": 1500,
                 },
                 value,
             )
+
+            for allowed_size in allowed_sizes:
+                name, size_def = allowed_size.split()
+                self.assertIn(name, scales)
+                width, height = size_def.split(":")
+                width = int(width)
+                self.assertEqual(width, scales[name]["width"])
+                self.assertEqual(download_url, scales[name]["download"])
 
     def test_relationchoice_field_serialization_returns_summary_dict(self):
         doc2 = self.portal[
