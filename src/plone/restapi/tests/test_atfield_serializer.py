@@ -11,6 +11,7 @@ from plone.restapi.testing import PLONE_VERSION
 from plone.scale import storage
 from Products.CMFCore.utils import getToolByName
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 
 import os
 import unittest
