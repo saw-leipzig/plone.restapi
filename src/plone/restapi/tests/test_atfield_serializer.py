@@ -14,8 +14,9 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 
 import os
-import unittest
 import six
+import unittest
+
 
 if PLONE_VERSION.base_version >= "5.1":
     GIF_SCALE_FORMAT = "png"
